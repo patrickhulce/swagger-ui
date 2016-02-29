@@ -26053,6 +26053,15 @@ SwaggerUi.Views.OperationView = Backbone.View.extend({
         var fileName = response.url.substr(response.url.lastIndexOf('/') + 1);
         var download = [type, fileName, href].join(':');
 
+        // Use filename from response header
+        var disposition = headers['content-disposition'] || headers['Content-Disposition'];
+        if(typeof disposition !== 'undefined') {
+          var responseFilename = /filename=([^;]*);?/.exec(disposition);
+          if(responseFilename !== null && responseFilename.length > 1) {
+            download = responseFilename[1];
+          }
+        }
+
         a.setAttribute('href', href);
         a.setAttribute('download', download);
         a.innerText = 'Download ' + fileName;
@@ -26191,7 +26200,8 @@ SwaggerUi.Views.ParameterView = Backbone.View.extend({
 
   initialize: function(){
     Handlebars.registerHelper('isArray', function(param, opts) {
-      if (param.type.toLowerCase() === 'array' || param.allowMultiple) {
+      var paramType = param.type && param.type.toLowerCase();
+      if (paramType === 'array' || param.allowMultiple) {
         return opts.fn(this);
       } else {
         return opts.inverse(this);
